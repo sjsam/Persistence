@@ -65,12 +65,35 @@ persistence projects
 persistence list persistence
 ```
 
-## Run the server
+## Run the server (quick / foreground)
 
 ```bash
 persistence-server
 # → Persistence MCP server → http://0.0.0.0:8077/mcp
+#   web: http://0.0.0.0:8077/  (read-only browse view)
 ```
+
+## Deploy as an always-on server
+
+One installer per platform: each creates a standalone venv at `~/.persistence/venv`
+(`%USERPROFILE%\.persistence` on Windows), generates an auth **token**, binds to the
+LAN (`0.0.0.0:8077`), and registers an auto-start service. Re-runnable; reuses an
+existing `token.txt`/`memory.db`.
+
+| Platform | Command (from the cloned repo) | Auto-start | Details |
+|----------|--------------------------------|------------|---------|
+| **macOS** | `bash deploy/macos/install.sh` | launchd | install **outside** `~/Documents` (TCC) |
+| **Linux** | `bash deploy/linux/install.sh` | systemd user unit + linger | — |
+| **WSL2** | `bash deploy/linux/install.sh`, then follow [`deploy/wsl/README.md`](deploy/wsl/README.md) | systemd in WSL + Windows task | NAT networking needs mirrored mode or a port-proxy |
+| **Windows** (native) | `powershell -ExecutionPolicy Bypass -File deploy\windows\install.ps1` | Scheduled Task | opens firewall TCP 8077 |
+
+Each installer prints the **token** and the **LAN URL** (`http://<host-ip>:8077/mcp`)
+to use when wiring clients. To migrate between hosts, copy `~/.persistence/memory.db`
+(and `token.txt` to keep the same token) before first run — the embedding model is
+the same everywhere, so stored vectors stay valid.
+
+> **LAN reach:** give the host a **static IP / DHCP reservation** so the URL never
+> changes. Always run with `PERSISTENCE_TOKEN` set once you leave `localhost`.
 
 ### Configuration (environment variables)
 
@@ -90,6 +113,27 @@ persistence-server
 > every embed so a mismatch fails loudly rather than corrupting recall.
 
 ## Client wiring
+
+### Convenience scripts (recommended)
+
+Point every installed client at a server in one command:
+
+```bash
+# macOS / Linux / WSL-hosted clients
+scripts/connect-client.sh --url http://<host-ip>:8077/mcp --token <TOKEN>
+```
+```powershell
+# Windows-hosted clients (Claude Desktop, Antigravity, …)
+scripts\connect-client.ps1 -Url http://<host-ip>:8077/mcp -Token <TOKEN>
+```
+
+Both auto-detect which clients are present (Claude Code, Claude Desktop,
+Antigravity, ollmcp), merge into existing configs without clobbering them, and are
+re-runnable. Limit with `--client claude-code,ollmcp` (`-Clients` on PowerShell). If
+`--token` is omitted it's read from `~/.persistence/token.txt`. Restart Claude
+Desktop / Antigravity afterward to load the change.
+
+### Manual wiring (reference)
 
 Examples below include the `Authorization: Bearer <TOKEN>` header — required
 whenever `PERSISTENCE_TOKEN` is set on the server. Omit it if you run tokenless.
@@ -156,11 +200,12 @@ ollmcp --servers-json ~/.persistence/ollmcp-servers.json --model qwen2.5:7b
 > From another device on the LAN, replace `localhost` with the host's name
 > (e.g. `http://workstation.local:8077/mcp`).
 
-## Auto-start on boot (macOS launchd)
+## Auto-start on boot
 
-See `deploy/com.persistence.server.plist` — copy it to
-`~/Library/LaunchAgents/` and `launchctl load` it so memory is reachable after a
-reboot. (Data on disk always survives; only the process needs restarting.)
+Use the platform installer under [`deploy/`](deploy/) (see **Deploy as an
+always-on server** above) — they register launchd / systemd / Scheduled Task
+units for you. Data on disk always survives a reboot; only the process needs to
+come back up.
 
 ## Tests
 

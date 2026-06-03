@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Template launchd agent. install.sh renders __VENV__ and __TOKEN__ and writes
+  the result to ~/Library/LaunchAgents/com.persistence.server.plist.
+
+  NOTE: install into a non-protected dir (~/.persistence) — macOS TCC blocks
+  launchd from reading ~/Documents, ~/Desktop, ~/Downloads.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.persistence.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__VENV__</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PERSISTENCE_HOST</key>
+        <string>0.0.0.0</string>
+        <key>PERSISTENCE_PORT</key>
+        <string>8077</string>
+        <key>OLLAMA_URL</key>
+        <string>http://localhost:11434</string>
+        <key>PERSISTENCE_TOKEN</key>
+        <string>__TOKEN__</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/persistence.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/persistence.err.log</string>
+</dict>
+</plist>

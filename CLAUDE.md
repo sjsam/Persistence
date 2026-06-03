@@ -82,7 +82,8 @@ verified end-to-end against a live Ollama + real MCP client. See `README.md`.
 - `src/persistence/` — `config`, `embeddings` (Ollama), `store` (SQLite + sqlite-vec,
   append-only, semantic recall with keyword fallback), `server` (FastMCP HTTP), `cli`.
 - `tests/` — 10 passing tests (offline, via an injected fake embedder).
-- `deploy/com.persistence.server.plist` — launchd auto-start (phase 5).
+- `deploy/{macos,linux,wsl,windows}/` — per-platform installers + auto-start units (phase 5).
+- `scripts/connect-client.{sh,ps1}` — wire all MCP clients to a server URL+token.
 - `webview.py` — read-only browse view; backup via SQLite online-backup API.
 - Verified live: combined server serves the web view (`/`, `/healthz`, `/p/{project}`)
   AND the MCP endpoint (`/mcp`) on one port.
