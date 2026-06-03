@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Persistence data
+*.db
+*.db-wal
+*.db-shm
+.persistence/
+
+# Local agent state
+.claude/

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS launchd agent for the Persistence MCP server.
+
+  Setup:
+    1. Edit the paths below (PROJECT_DIR, and the venv python).
+    2. cp deploy/com.persistence.server.plist ~/Library/LaunchAgents/
+    3. launchctl load ~/Library/LaunchAgents/com.persistence.server.plist
+    4. launchctl start com.persistence.server
+
+  The server then auto-starts on login and restarts if it crashes. The SQLite
+  data on disk always survives regardless; only the process needs to come back.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.persistence.server</string>
+
+    <!--
+      Install into a non-protected dir (NOT ~/Documents — macOS TCC blocks
+      launchd from reading it). Build with:
+        python3 -m venv ~/.persistence/venv
+        ~/.persistence/venv/bin/pip install <path-to-this-project>
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sajithjohnsam/.persistence/venv/bin/persistence-server</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PERSISTENCE_PORT</key>
+        <string>8077</string>
+        <key>OLLAMA_URL</key>
+        <string>http://localhost:11434</string>
+        <!-- Uncomment to require a shared token:
+        <key>PERSISTENCE_TOKEN</key>
+        <string>change-me</string>
+        -->
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/persistence.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/persistence.err.log</string>
+</dict>
+</plist>
