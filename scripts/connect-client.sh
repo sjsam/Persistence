@@ -6,7 +6,7 @@
 #   scripts/connect-client.sh --url http://localhost:8077/mcp           # token read from ~/.persistence/token.txt
 #   scripts/connect-client.sh --url ... --client claude-code,ollmcp     # subset
 #
-# Clients: claude-code, claude-desktop, antigravity, ollmcp  (default: all).
+# Clients: claude-code, claude-desktop, gemini-cli, antigravity, ollmcp  (default: all).
 # Only configures clients that are actually present. Re-runnable (idempotent).
 set -euo pipefail
 
@@ -45,7 +45,7 @@ fi
 
 # --- Claude Desktop + Antigravity + ollmcp (JSON via python) ----------------
 URL="$URL" AUTH="$AUTH" TOKEN="$TOKEN" CLIENTS="$CLIENTS" python3 - <<'PY'
-import json, os, sys, pathlib, platform
+import json, os, sys, pathlib, platform, shutil
 
 url, auth, token, clients = (os.environ[k] for k in ("URL","AUTH","TOKEN","CLIENTS"))
 def want(name): return clients == "all" or name in clients.split(",")
@@ -75,6 +75,18 @@ if want("claude-desktop"):
         print("✓ Claude Desktop configured")
     else:
         print("· Claude Desktop skipped (config not found)")
+
+# Gemini CLI — uses ~/.gemini/settings.json with httpUrl + headers (distinct
+# from Antigravity below, which uses mcp_config.json + serverUrl)
+if want("gemini-cli"):
+    gs = home / ".gemini/settings.json"
+    if shutil.which("gemini") or gs.exists():
+        srv = {"httpUrl": url}
+        if token: srv["headers"] = {"Authorization": auth}
+        merge(gs, lambda d: d.setdefault("mcpServers", {}).__setitem__("persistence", srv))
+        print("✓ Gemini CLI configured")
+    else:
+        print("· Gemini CLI skipped (gemini CLI not found)")
 
 # Antigravity (Gemini) — uses serverUrl + headers
 if want("antigravity"):

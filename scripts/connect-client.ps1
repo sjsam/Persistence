@@ -5,7 +5,7 @@
     scripts\connect-client.ps1 -Url http://localhost:8077/mcp           # token from %USERPROFILE%\.persistence\token.txt
     scripts\connect-client.ps1 -Url ... -Clients claude-code,claude-desktop
 
-  Clients: claude-code, claude-desktop, antigravity, ollmcp (default: all).
+  Clients: claude-code, claude-desktop, gemini-cli, antigravity, ollmcp (default: all).
   Configures only clients that are present. Re-runnable.
 #>
 param(
@@ -52,6 +52,18 @@ if (Want "claude-desktop") {
         Merge-JsonServer $cd @{ command = "npx"; args = $args }
         Write-Host "OK Claude Desktop configured"
     } else { Write-Host "-- Claude Desktop skipped (config not found)" }
+}
+
+# Gemini CLI — ~/.gemini/settings.json with httpUrl + headers (distinct from
+# Antigravity below, which uses mcp_config.json + serverUrl)
+if (Want "gemini-cli") {
+    $gs = Join-Path $env:USERPROFILE ".gemini\settings.json"
+    if ((Get-Command gemini -ErrorAction SilentlyContinue) -or (Test-Path $gs)) {
+        $srv = @{ httpUrl = $Url }
+        if ($Token) { $srv["headers"] = @{ Authorization = $auth } }
+        Merge-JsonServer $gs $srv
+        Write-Host "OK Gemini CLI configured"
+    } else { Write-Host "-- Gemini CLI skipped (gemini CLI not found)" }
 }
 
 # Antigravity

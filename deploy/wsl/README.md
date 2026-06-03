@@ -55,12 +55,18 @@ networkingMode=mirrored
 ```
 
 `wsl --shutdown` and reopen. WSL now shares the Windows host's IP — other devices
-reach the server at `http://<windows-lan-ip>:8077/mcp`. Open the firewall once
-(elevated PowerShell):
+reach the server at `http://<windows-lan-ip>:8077/mcp`. Open the firewall with the
+self-elevating helper (it prompts for UAC itself — run from WSL or Windows):
 
 ```powershell
-netsh advfirewall firewall add rule name="Persistence MCP 8077" dir=in action=allow protocol=TCP localport=8077 profile=private
+powershell -ExecutionPolicy Bypass -File deploy\wsl\firewall.ps1
 ```
+
+> In mirrored mode the WSL vSwitch is gated by the **Hyper-V firewall** (default
+> inbound = Block), so a plain `netsh advfirewall` rule is *not* sufficient on its
+> own. `firewall.ps1` adds both the Hyper-V rule (the real gate) and a standard
+> inbound rule scoped to the local subnet + Private profile. `./setup.sh` runs this
+> for you automatically on WSL; `-Remove` undoes it.
 
 ### Option B — Port proxy (older Windows / NAT mode)
 

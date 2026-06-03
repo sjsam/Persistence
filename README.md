@@ -38,6 +38,33 @@ ordinary chat commands ("save this to memory" / "recall project X").
 | `list_projects()` | list known projects |
 | `list_memories(project)` | list a project's saved deltas |
 
+## Quick start (one command)
+
+From the cloned repo, on the machine that will **host** the memory:
+
+```bash
+./setup.sh            # macOS / Linux / WSL
+```
+```powershell
+.\setup.ps1           # native Windows
+```
+
+This checks prerequisites (pulls the Ollama embedding model if missing), installs
+and auto-starts the server, opens the firewall for LAN access where needed (WSL
+prompts for elevation), wires every MCP client found on this machine, and prints a
+ready-to-paste command for **other** machines. On any other device, clone the repo
+and run that command to connect its tools to this server — no server install:
+
+```bash
+./setup.sh connect --url http://<host-lan-ip>:8077/mcp --token <TOKEN>
+```
+```powershell
+.\setup.ps1 connect -Url http://<host-lan-ip>:8077/mcp -Token <TOKEN>
+```
+
+The sections below document the underlying installers and per-tool wiring that
+`setup` orchestrates, for when you want to do it by hand.
+
 ## Requirements
 
 - Python 3.11+
@@ -127,9 +154,9 @@ scripts/connect-client.sh --url http://<host-ip>:8077/mcp --token <TOKEN>
 scripts\connect-client.ps1 -Url http://<host-ip>:8077/mcp -Token <TOKEN>
 ```
 
-Both auto-detect which clients are present (Claude Code, Claude Desktop,
-Antigravity, ollmcp), merge into existing configs without clobbering them, and are
-re-runnable. Limit with `--client claude-code,ollmcp` (`-Clients` on PowerShell). If
+Both auto-detect which clients are present (Claude Code, Claude Desktop, Gemini
+CLI, Antigravity, ollmcp), merge into existing configs without clobbering them, and
+are re-runnable. Limit with `--client claude-code,ollmcp` (`-Clients` on PowerShell). If
 `--token` is omitted it's read from `~/.persistence/token.txt`. Restart Claude
 Desktop / Antigravity afterward to load the change.
 
@@ -158,6 +185,21 @@ The header is passed as two extra args:
         "-y", "mcp-remote", "http://localhost:8077/mcp",
         "--header", "Authorization: Bearer <TOKEN>"
       ]
+    }
+  }
+}
+```
+
+**Gemini CLI** — `~/.gemini/settings.json`. Uses `httpUrl` (NOT `serverUrl` — that
+is the Antigravity schema below), header as a `headers` map. Merges alongside your
+existing settings:
+
+```json
+{
+  "mcpServers": {
+    "persistence": {
+      "httpUrl": "http://localhost:8077/mcp",
+      "headers": { "Authorization": "Bearer <TOKEN>" }
     }
   }
 }
